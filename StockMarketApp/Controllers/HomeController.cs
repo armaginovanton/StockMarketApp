@@ -25,58 +25,65 @@ namespace StockMarketApp.Controllers
         [HttpPost]
         public RedirectResult Buy(CustomerOrder customerOrder)
         {
-            customerOrder.DateTimeCustomer = DateTime.Now;
-            foreach (SellerOrder sellerOrder in db.SellerOrders.OrderBy(s => s.Price))
+            string pricestring = Request.Form["Price"].Replace(".",",");
+            decimal price;
+            if (decimal.TryParse(pricestring, out price))
             {
-                if (customerOrder.Count > 0)
+
+                customerOrder.Price = price;
+                customerOrder.DateTimeCustomer = DateTime.Now;
+                foreach (SellerOrder sellerOrder in db.SellerOrders.OrderBy(s => s.Price))
                 {
-                    if (sellerOrder.Price <= customerOrder.Price)
+                    if (customerOrder.Count > 0)
                     {
-                        if (sellerOrder.Count >= customerOrder.Count)
+                        if (sellerOrder.Price <= customerOrder.Price)
                         {
-                            sellerOrder.Count -= customerOrder.Count;
-                            db.Orders.Add(new Order
+                            if (sellerOrder.Count >= customerOrder.Count)
                             {
-                                Count = customerOrder.Count,
-                                DateTimeCompleted = customerOrder.DateTimeCustomer,
-                                DateTimeCustomer = customerOrder.DateTimeCustomer,
-                                DateTimeSeller = sellerOrder.DateTimeSeller,
-                                EmailCustomer = customerOrder.Email,
-                                EmailSeller = sellerOrder.Email,
-                                Price = sellerOrder.Price
-                            });
-                            customerOrder.Count = 0;
-                        }
-                        else
-                        {
-                            customerOrder.Count -= sellerOrder.Count;
-
-                            db.Orders.Add(new Order
+                                sellerOrder.Count -= customerOrder.Count;
+                                db.Orders.Add(new Order
+                                {
+                                    Count = customerOrder.Count,
+                                    DateTimeCompleted = customerOrder.DateTimeCustomer,
+                                    DateTimeCustomer = customerOrder.DateTimeCustomer,
+                                    DateTimeSeller = sellerOrder.DateTimeSeller,
+                                    EmailCustomer = customerOrder.Email,
+                                    EmailSeller = sellerOrder.Email,
+                                    Price = sellerOrder.Price
+                                });
+                                customerOrder.Count = 0;
+                            }
+                            else
                             {
-                                Count = sellerOrder.Count,
-                                DateTimeCompleted = customerOrder.DateTimeCustomer,
-                                DateTimeCustomer = customerOrder.DateTimeCustomer,
-                                DateTimeSeller = sellerOrder.DateTimeSeller,
-                                EmailCustomer = customerOrder.Email,
-                                EmailSeller = sellerOrder.Email,
-                                Price = sellerOrder.Price
-                            });
+                                customerOrder.Count -= sellerOrder.Count;
 
-                            sellerOrder.Count = 0;
+                                db.Orders.Add(new Order
+                                {
+                                    Count = sellerOrder.Count,
+                                    DateTimeCompleted = customerOrder.DateTimeCustomer,
+                                    DateTimeCustomer = customerOrder.DateTimeCustomer,
+                                    DateTimeSeller = sellerOrder.DateTimeSeller,
+                                    EmailCustomer = customerOrder.Email,
+                                    EmailSeller = sellerOrder.Email,
+                                    Price = sellerOrder.Price
+                                });
+
+                                sellerOrder.Count = 0;
+                            }
                         }
                     }
                 }
+                db.SaveChanges();
+
+                db.SellerOrders.RemoveRange(db.SellerOrders.Where(s => s.Count == 0).ToList());
+
+                if (customerOrder.Count > 0)
+                {
+                    db.CustomerOrders.Add(customerOrder);
+                }
+
+                db.SaveChanges();
             }
-            db.SaveChanges();
-
-            db.SellerOrders.RemoveRange(db.SellerOrders.Where(s => s.Count == 0).ToList());
-
-            if (customerOrder.Count > 0)
-            {
-                db.CustomerOrders.Add(customerOrder);
-            }
-
-            db.SaveChanges();           
 
             return RedirectPermanent("/Home/Index");
         }
@@ -84,58 +91,64 @@ namespace StockMarketApp.Controllers
         [HttpPost]
         public RedirectResult Sell(SellerOrder sellerOrder)
         {
-            sellerOrder.DateTimeSeller = DateTime.Now;
-
-            foreach (CustomerOrder customerOrder in db.CustomerOrders)
+            string pricestring = Request.Form["Price"].Replace(".", ",");
+            decimal price;
+            if (decimal.TryParse(pricestring, out price))
             {
-                if (sellerOrder.Count > 0)
+
+                sellerOrder.Price = price;
+                sellerOrder.DateTimeSeller = DateTime.Now;
+
+                foreach (CustomerOrder customerOrder in db.CustomerOrders)
                 {
-                    if (sellerOrder.Price <= customerOrder.Price)
+                    if (sellerOrder.Count > 0)
                     {
-                        if (sellerOrder.Count <= customerOrder.Count)
+                        if (sellerOrder.Price <= customerOrder.Price)
                         {
-                            customerOrder.Count -= sellerOrder.Count;
-                            db.Orders.Add(new Order
+                            if (sellerOrder.Count <= customerOrder.Count)
                             {
-                                Count = sellerOrder.Count,
-                                DateTimeCompleted = sellerOrder.DateTimeSeller,
-                                DateTimeCustomer = customerOrder.DateTimeCustomer,
-                                DateTimeSeller = sellerOrder.DateTimeSeller,
-                                EmailCustomer = customerOrder.Email,
-                                EmailSeller = sellerOrder.Email,
-                                Price = sellerOrder.Price
-                            });
-                            sellerOrder.Count = 0;
-                        }
-                        else
-                        {
-                            sellerOrder.Count -= customerOrder.Count;
-
-                            db.Orders.Add(new Order
+                                customerOrder.Count -= sellerOrder.Count;
+                                db.Orders.Add(new Order
+                                {
+                                    Count = sellerOrder.Count,
+                                    DateTimeCompleted = sellerOrder.DateTimeSeller,
+                                    DateTimeCustomer = customerOrder.DateTimeCustomer,
+                                    DateTimeSeller = sellerOrder.DateTimeSeller,
+                                    EmailCustomer = customerOrder.Email,
+                                    EmailSeller = sellerOrder.Email,
+                                    Price = sellerOrder.Price
+                                });
+                                sellerOrder.Count = 0;
+                            }
+                            else
                             {
-                                Count = customerOrder.Count,
-                                DateTimeCompleted = sellerOrder.DateTimeSeller,
-                                DateTimeCustomer = customerOrder.DateTimeCustomer,
-                                DateTimeSeller = sellerOrder.DateTimeSeller,
-                                EmailCustomer = customerOrder.Email,
-                                EmailSeller = sellerOrder.Email,
-                                Price = sellerOrder.Price
-                            });
+                                sellerOrder.Count -= customerOrder.Count;
 
-                            customerOrder.Count = 0;
+                                db.Orders.Add(new Order
+                                {
+                                    Count = customerOrder.Count,
+                                    DateTimeCompleted = sellerOrder.DateTimeSeller,
+                                    DateTimeCustomer = customerOrder.DateTimeCustomer,
+                                    DateTimeSeller = sellerOrder.DateTimeSeller,
+                                    EmailCustomer = customerOrder.Email,
+                                    EmailSeller = sellerOrder.Email,
+                                    Price = sellerOrder.Price
+                                });
+
+                                customerOrder.Count = 0;
+                            }
                         }
                     }
                 }
-            }
-            db.SaveChanges();
+                db.SaveChanges();
 
-            db.CustomerOrders.RemoveRange(db.CustomerOrders.Where(s => s.Count == 0).ToList());
-            if (sellerOrder.Count > 0)
-            {
-                db.SellerOrders.Add(sellerOrder);
+                db.CustomerOrders.RemoveRange(db.CustomerOrders.Where(s => s.Count == 0).ToList());
+                if (sellerOrder.Count > 0)
+                {
+                    db.SellerOrders.Add(sellerOrder);
+                }
+                db.SaveChanges();
             }
-            db.SaveChanges();
-
             return RedirectPermanent("/Home/Index");
         }
 
