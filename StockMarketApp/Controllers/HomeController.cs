@@ -103,7 +103,7 @@ namespace StockMarketApp.Controllers
                                 DateTimeSeller = sellerOrder.DateTimeSeller,
                                 EmailCustomer = customerOrder.Email,
                                 EmailSeller = sellerOrder.Email,
-                                Price = customerOrder.Price
+                                Price = sellerOrder.Price
                             });
                             sellerOrder.Count = 0;
                         }
@@ -119,7 +119,7 @@ namespace StockMarketApp.Controllers
                                 DateTimeSeller = sellerOrder.DateTimeSeller,
                                 EmailCustomer = customerOrder.Email,
                                 EmailSeller = sellerOrder.Email,
-                                Price = customerOrder.Price
+                                Price = sellerOrder.Price
                             });
 
                             customerOrder.Count = 0;
